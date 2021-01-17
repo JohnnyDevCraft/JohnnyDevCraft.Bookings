@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookings.Engine.Abstractions", "Bookings.Engine.Abstractions\Bookings.Engine.Abstractions.csproj", "{0C93445A-976E-4B4D-A61C-F6778A8D3869}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookings.Engine", "Bookings.Engine\Bookings.Engine.csproj", "{5E34B5B7-220B-40D5-AD14-7818A13231FB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C93445A-976E-4B4D-A61C-F6778A8D3869}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C93445A-976E-4B4D-A61C-F6778A8D3869}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C93445A-976E-4B4D-A61C-F6778A8D3869}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C93445A-976E-4B4D-A61C-F6778A8D3869}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E34B5B7-220B-40D5-AD14-7818A13231FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E34B5B7-220B-40D5-AD14-7818A13231FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E34B5B7-220B-40D5-AD14-7818A13231FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E34B5B7-220B-40D5-AD14-7818A13231FB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B96026B3-8541-42E4-8502-E5144596429F}
+	EndGlobalSection
+EndGlobal
