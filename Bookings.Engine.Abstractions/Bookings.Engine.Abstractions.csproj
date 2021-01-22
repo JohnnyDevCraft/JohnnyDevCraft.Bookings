@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <PackageVersion>0.0.1</PackageVersion>
+    <Title>JohnnyDevCraft Bookings Abstractions</Title>
+    <Authors>JohnnyDevCraft LLC</Authors>
+    <Copyright>JohnnyDevCraft LLC</Copyright>
+    <PackageProjectUrl>https://github.com/JohnnyDevCraft/JohnnyDevCraft.Bookings</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JohnnyDevCraft/JohnnyDevCraft.Bookings</RepositoryUrl>
   </PropertyGroup>
 
 </Project>

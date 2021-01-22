@@ -5,111 +5,233 @@ using Bookings.Engine.Abstractions.Core;
 
 namespace Bookings.Engine
 {
-  public class BookingsManager: IBookingsManager
+  public class BookingsManager<TAppointment, TAppointmentType, TAvailItem>: IBookingsManager<TAppointment, TAppointmentType, TimeSlot, TAvailItem>
+    where TAppointment: class, IAppointment<TAppointmentType, TAvailItem>
+    where TAppointmentType: class, IAppointmentType<TAvailItem>
+    where TAvailItem: class, IAvailabilityItem
   {
-    private readonly IBookingRepository repo;
+    private readonly IBookingRepository<TAppointment, TAppointmentType, TAvailItem> repo;
     private readonly BookingConfiguration config;
 
-    public BookingsManager(IBookingRepository repo, BookingConfiguration config)
+    public BookingsManager(IBookingRepository<TAppointment, TAppointmentType, TAvailItem> repo, BookingConfiguration config)
     {
       this.repo = repo;
       this.config = config;
     }
 
-    public List<ITimeSlot> GetTimeSlots(DateTime day, string availabilityName)
+    public IEnumerable<TimeSlot> GetTimeSlots(DateTime day, string availabilityName)
     {
       var type = repo.GetAppointmentTypeByStringIdentity(availabilityName);
       var appointments = repo.GetAppointmentsByDate(day, type);
 
       var availability = GetAvailableTimesForDateAndType(type, day);
-      var unfilteredSlots = GetPossibleTimeSlots(day, availability);
+      var availabilityItems = availability.ToList();
 
-      var usableSlots = AvailableTimes(unfilteredSlots, availability);
+      if (!availabilityItems.Any()) return new List<TimeSlot>();
+
+      var unfilteredSlots = GetPossibleTimeSlots(day, availabilityItems);
+      
+      var timeSlots = unfilteredSlots.ToList();
+      if (!timeSlots.Any()) return new List<TimeSlot>();
+
+      var usableSlots = AvailableTimes(timeSlots, availabilityItems);
       var slots = AppointmentsNotMaxed(usableSlots, appointments, type);
 
+      return slots;
+
     }
 
-    private List<ITimeSlot> AppointmentsNotMaxed(List<ITimeSlot> usableSlots, List<IAppointment> appointments, IAppointmentType type)
+    private IEnumerable<TimeSlot> AppointmentsNotMaxed(IEnumerable<TimeSlot> usableSlots, IEnumerable<TAppointment> appointments, TAppointmentType type)
     {
-      foreach (var timeSlot in usableSlots)
+      var availabilities = type.Availability;
+      var timeSlots = usableSlots.ToList();
+      var appointmentList = appointments.ToList();
+
+      var result = new List<TimeSlot>();
+      
+      foreach (var item in availabilities)
       {
-        var apptCounter = 0;
-        var item = GetAvailabilityITemForSlot(type, timeSlot);
-
-        foreach (var appointment in appointments)
+        foreach (var slot in timeSlots)
         {
-          if(appointment.StartTime >= timeSlot.Start && a)
-        }
+          var counter = 0;
+          
+          foreach (var appointment in appointmentList)
+          {
+            if (AppointmentFallsInTimeslot(slot, appointment))
+            {
+              counter += 1;
+            }
+          }
 
+          if (counter < item.SimultaneousLimit && 
+              TimeSlotFallsInAvailability(slot, item))
+          {
+            result.Add(slot);
+          }
+        }
       }
 
-      
+      return result;
+
     }
 
-    private IAvailabilityItem GetAvailabilityITemForSlot(IAppointmentType type, ITimeSlot timeSlot)
+    private static IAvailabilityItem GetAvailabilityItemForTimeSlot(TAppointmentType type, TimeSlot timeSlot)
+    {
+      IAvailabilityItem avail = null;
+      
+      type.Availability.ForEach(a =>
+      {
+        if (TimeSlotFallsInAvailability(timeSlot, a))
+        {
+          avail = a;
+        }
+      });
+
+      return avail;
+    }
+
+    private static bool TimeSlotInAvailability(TimeSlot timeSlot, IAvailabilityItem availabilityItem)
+    {
+      var aStart = availabilityItem.StartTime;
+      var aEnd = availabilityItem.EndTime;
+      var tsStart = timeSlot.Start.TimeOfDay;
+      var tsEnd = timeSlot.End.TimeOfDay;
+
+      return tsStart >= aStart && tsEnd <= aEnd;
+    }
+
+    private bool AppointmentFallsInTimeslot(TimeSlot timeSlot, TAppointment appointment)
+    {
+      var tsStart = timeSlot.Start;
+      var tsEnd = timeSlot.End;
+      var aStart = appointment.StartTime;
+      var aEnd = appointment.StartTime + appointment.Duration;
+
+      if (aStart >= tsStart && aStart < tsEnd)
+      {
+        return true;
+      }
+
+      if (aEnd > tsStart && aEnd <= tsEnd)
+      {
+        return true;
+      }
+
+      if (aStart < tsStart && aEnd > tsEnd)
+      {
+        return true;
+      }
+
+      return aStart < tsStart && aEnd > tsEnd;
+    }
+
+    private static bool TimeSlotFallsInAvailability(TimeSlot timeSlot, TAvailItem availItem)
+    {
+      var slotStart = timeSlot.Start.TimeOfDay;
+      var slotEnd = timeSlot.End.TimeOfDay;
+      var aStart = availItem.StartTime;
+      var aEnd = availItem.EndTime;
+
+      if (slotStart >= aStart && slotStart < aEnd)
+      {
+        return true;
+      }
+
+      if (slotEnd > aStart && slotEnd <= aEnd)
+      {
+        return true;
+      }
+
+      if (slotStart < aStart && slotEnd > aEnd)
+      {
+        return true;
+      }
+
+      return slotStart < aStart && slotEnd > aEnd;
+    }
+
+    private IAvailabilityItem GetAvailabilityItemForSlot(TAppointmentType type, TimeSlot timeSlot)
     {
       return type.Availability.SingleOrDefault(x =>
         timeSlot.Start.TimeOfDay >= x.StartTime && timeSlot.End.TimeOfDay <= x.EndTime &&
         x.AvailableDays.Any(d => d == timeSlot.Start.DayOfWeek));
     }
 
-    private List<ITimeSlot> AvailableTimes(List<ITimeSlot> unfilteredSlots, List<IAvailabilityItem> availability)
+    private static IEnumerable<TimeSlot> AvailableTimes(IEnumerable<TimeSlot> unfilteredSlots, IEnumerable<IAvailabilityItem> availability)
     {
       return unfilteredSlots.Where(x=> TimeIsAvailable(x, availability)).ToList();
     }
 
-    private List<IAvailabilityItem> GetAvailableTimesForDateAndType(IAppointmentType type, DateTime date)
+    private static IEnumerable<IAvailabilityItem> GetAvailableTimesForDateAndType(TAppointmentType type, DateTime date)
     {
       return type.Availability.Where(x => x.AvailableDays.Contains(date.DayOfWeek)).ToList();
     }
 
-    private (TimeSpan, TimeSpan) GetTimeRangeForDateAndType(DateTime date, List<IAvailabilityItem> availabilityItems)
+    private static (TimeSpan, TimeSpan) GetTimeRangeForDateAndType(DateTime date, IEnumerable<IAvailabilityItem> availabilityItems)
     {
-      var startTime = availabilityItems.Min(x => x.StartTime);
-      var endTime = availabilityItems.Max(x => x.EndTime);
+      var items = availabilityItems.ToList();
+      var day = date.DayOfWeek;
+      
+      var startTime = items.Where(i => i.AvailableDays.Contains(day)).Min(x => x.StartTime);
+      var endTime = items.Where(i => i.AvailableDays.Contains(day)).Max(x => x.EndTime);
+      
       return (startTime, endTime);
     }
 
-    private List<ITimeSlot> GetPossibleTimeSlots(DateTime date, List<IAvailabilityItem> items)
+    private IEnumerable<TimeSlot> GetPossibleTimeSlots(DateTime date, IEnumerable<IAvailabilityItem> items)
     {
-      var range = GetTimeRangeForDateAndType(date, items);
-      var list = new List<ITimeSlot>();
+      var (start, end) = GetTimeRangeForDateAndType(date, items);
+      var list = new List<TimeSlot>();
 
-      while (range.Item1 < range.Item2)
+      while (start < end)
       {
-        var endTime = range.Item1 + config.TimeBlockLength;
+        var endTime = start + config.TimeBlockLength;
 
         list.Add(new TimeSlot()
         {
           End = date.Date.AddHours(endTime.Hours).AddMinutes(endTime.Minutes),
-          Start = date.Date.AddHours(range.Item1.Hours).AddMinutes(range.Item1.Minutes)
+          Start = date.Date.AddHours(start.Hours).AddMinutes(start.Minutes)
         });
 
-        range.Item1 = endTime;
+        start = endTime;
       }
 
       return list;
     }
 
-    private bool AppointmentNotMaxed()
-    {
 
-    }
-
-    private bool TimeIsAvailable(ITimeSlot timeSlot, List<IAvailabilityItem> availabilityItems)
+    private static bool TimeIsAvailable(TimeSlot timeSlot, IEnumerable<IAvailabilityItem> availabilityItems)
     {
       return availabilityItems.Any(x =>
         timeSlot.Start.TimeOfDay >= x.StartTime && timeSlot.End.TimeOfDay <= x.EndTime);
     }
 
-    public List<DateTime> GetAvailableDates(DateTime startDate, DateTime endDate)
+    public List<DateTime> GetAvailableDates(DateTime startDate, DateTime endDate, string identity)
     {
-      throw new NotImplementedException();
+      var dates = new List<DateTime>();
+      
+      while (startDate <= endDate)
+      {
+        var slots = GetTimeSlots(startDate, identity);
+        if (slots.Any())
+        {
+          dates.Add(startDate);
+        }
+        startDate = startDate.AddDays(1);
+      }
+
+      return dates;
     }
 
-    public IAppointment SaveAppointment(IAppointment missing_name)
+    public TAppointment SaveAppointment(TAppointment appointment)
     {
-      throw new NotImplementedException();
+      TAppointment savedAppointment = null;
+      
+      var timeSlots = GetTimeSlots(appointment.StartTime, appointment.AppointmentType.Identity);
+
+      if (timeSlots.Any(x => x.Start == appointment.StartTime && x.End == appointment.StartTime + appointment.Duration)) savedAppointment = repo.SaveAppointment(appointment);
+      
+      return savedAppointment;
     }
   }
 }

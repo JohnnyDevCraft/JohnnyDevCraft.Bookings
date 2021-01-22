@@ -3,11 +3,14 @@ using System.Collections.Generic;
 
 namespace Bookings.Engine.Abstractions.Core
 {
-  public interface IBookingRepository
+  public interface IBookingRepository<T, TType, TItem> 
+    where T: class, IAppointment<TType, TItem> 
+    where TType: class, IAppointmentType<TItem>
+  where TItem: class, IAvailabilityItem
   {
-    IAppointment SaveAppointment(IAppointment appointment);
-    bool CancelAppointment(IAppointment appointment);
-    List<IAppointment> GetAppointmentsByDate(DateTime date, IAppointmentType appointmentType);
-    IAppointmentType GetAppointmentTypeByStringIdentity(string identity);
+    T SaveAppointment(T appointment);
+    bool CancelAppointment(T appointment);
+    IEnumerable<T> GetAppointmentsByDate(DateTime date, TType appointmentType);
+    TType GetAppointmentTypeByStringIdentity(string identity);
   }
 }

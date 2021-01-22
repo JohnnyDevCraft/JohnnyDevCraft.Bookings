@@ -2,12 +2,14 @@
 
 namespace Bookings.Engine.Abstractions.Core
 {
-  public interface IAppointment
+  public interface IAppointment<TAppointmentType, TAvailItem> 
+    where TAppointmentType: class, IAppointmentType<TAvailItem>
+    where TAvailItem: class, IAvailabilityItem
   {
     DateTime StartTime { get; set; }
     TimeSpan Duration { get; set; }
     string CustomerIdentity { get; }
     string PaymentIdentity { get; }
-    IAvailabilityItem AvailabilityItem { get; set; }
+    TAppointmentType AppointmentType { get; set; }
   }
 }
