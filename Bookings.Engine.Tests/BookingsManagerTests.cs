@@ -24,7 +24,7 @@ namespace Bookings.Engine.Tests
         public void GetTimeSlotsForTomorrow_ShouldReturnThirteenSlots_WhenRanUntouched()
         {
             //Test
-            var timeSlots = mgr.GetTimeSlots(DateTime.Today.AddDays(1), "kjlskdjf").ToList();
+            var timeSlots = mgr.GetTimeSlots(DateTime.Today.AddDays(1), "kjlskdjf", 30).ToList();
             
             Assert.NotNull(timeSlots);
             Assert.AreEqual(13,timeSlots.Count);
@@ -33,7 +33,7 @@ namespace Bookings.Engine.Tests
         [Test]
         public void GetTimeSlotsForNextDay_ShouldReturnFourteenSots()
         {
-            var timeSlots = mgr.GetTimeSlots(DateTime.Today.AddDays(2), "kjlskdjf").ToList();
+            var timeSlots = mgr.GetTimeSlots(DateTime.Today.AddDays(2), "kjlskdjf", 30).ToList();
             
             Assert.NotNull(timeSlots);
             Assert.AreEqual(14, timeSlots.Count);
@@ -42,7 +42,7 @@ namespace Bookings.Engine.Tests
         [Test]
         public void GetDates_shouldReturnTwoDates()
         {
-            var dates = mgr.GetAvailableDates(DateTime.Today, DateTime.Today.AddDays(5), "kjlskdjf").ToList();
+            var dates = mgr.GetAvailableDates(DateTime.Today, DateTime.Today.AddDays(5), "kjlskdjf", 30).ToList();
             
             Assert.NotNull(dates);
             Assert.AreEqual(2, dates.Count);

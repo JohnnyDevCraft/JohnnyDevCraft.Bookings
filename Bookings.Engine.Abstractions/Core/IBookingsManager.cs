@@ -9,8 +9,8 @@ namespace Bookings.Engine.Abstractions.Core
     where TTimeSlot: class, ITimeSlot
     where TAvailItem: class, IAvailabilityItem
   {
-    IEnumerable<TTimeSlot> GetTimeSlots(DateTime day, string availabilityName);
-    List<DateTime> GetAvailableDates(DateTime startDate, DateTime endDate, string identity);
+    IEnumerable<TTimeSlot> GetTimeSlots(DateTime day, string availabilityName, TimeSpan duration);
+    List<DateTime> GetAvailableDates(DateTime startDate, DateTime endDate, string identity, TimeSpan duration);
     TAppointment SaveAppointment(TAppointment appointment);
   }
 }
