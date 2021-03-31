@@ -165,7 +165,7 @@ namespace Bookings.Engine
 
     private static IEnumerable<TimeSlot> UsableSlots(IEnumerable<TimeSlot> unfilteredSlots, IEnumerable<IAvailabilityItem> availability, TimeSpan duration)
     {
-      return unfilteredSlots.Where(x => availability.Any(y => y.StartTime >= x.Start.TimeOfDay && y.EndTime >= x.Start.Add(duration).TimeOfDay));
+      return unfilteredSlots.Where(x => availability.Any(y => x.Start.TimeOfDay >= y.StartTime && x.Start.Add(duration).TimeOfDay <= y.EndTime));
     }
 
     private static IEnumerable<IAvailabilityItem> GetAvailableTimesForDateAndType(TAppointmentType type, DateTime date)
