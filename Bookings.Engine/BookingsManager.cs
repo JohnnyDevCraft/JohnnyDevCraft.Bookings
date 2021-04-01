@@ -5,10 +5,10 @@ using Bookings.Engine.Abstractions.Core;
 
 namespace Bookings.Engine
 {
-  public class BookingsManager<TAppointment, TAppointmentType, TAvailItem>: IBookingsManager<TAppointment, TAppointmentType, TimeSlot, TAvailItem>
-    where TAppointment: class, IAppointment<TAppointmentType, TAvailItem>
-    where TAppointmentType: class, IAppointmentType<TAvailItem>
-    where TAvailItem: class, IAvailabilityItem
+  public class BookingsManager<TAppointment, TAppointmentType, TAvailItem> : IBookingsManager<TAppointment, TAppointmentType, TimeSlot, TAvailItem>
+    where TAppointment : class, IAppointment<TAppointmentType, TAvailItem>
+    where TAppointmentType : class, IAppointmentType<TAvailItem>
+    where TAvailItem : class, IAvailabilityItem
   {
     private readonly IBookingRepository<TAppointment, TAppointmentType, TAvailItem> repo;
     private readonly BookingConfiguration config;
@@ -47,27 +47,30 @@ namespace Bookings.Engine
       var availabilities = type.Availability;
       var timeSlots = usableSlots.ToList();
       var appointmentList = appointments.ToList();
-
-      var result = new List<TimeSlot>();
+      var duration = type.Duration;
       
+      var result = new List<TimeSlot>();
+
       foreach (var item in availabilities)
       {
         foreach (var slot in timeSlots)
         {
-          var counter = 0;
-          
-          foreach (var appointment in appointmentList)
+          if (TimeSlotFallsInAvailability(slot, item))
           {
-            if (AppointmentFallsInTimeslot(slot, appointment))
-            {
-              counter += 1;
-            }
-          }
+            var counter = 0;
 
-          if (counter < item.SimultaneousLimit && 
-              TimeSlotFallsInAvailability(slot, item))
-          {
-            result.Add(slot);
+            foreach (var appointment in appointmentList)
+            {
+              if (AppointmentFallsInTimeslot(slot, appointment, duration))
+              {
+                counter += 1;
+              }
+            }
+
+            if (counter < item.SimultaneousLimit)
+            {
+              result.Add(slot);
+            }
           }
         }
       }
@@ -79,7 +82,7 @@ namespace Bookings.Engine
     private static IAvailabilityItem GetAvailabilityItemForTimeSlot(TAppointmentType type, TimeSlot timeSlot)
     {
       IAvailabilityItem avail = null;
-      
+
       type.Availability.ForEach(a =>
       {
         if (TimeSlotFallsInAvailability(timeSlot, a))
@@ -101,10 +104,10 @@ namespace Bookings.Engine
       return tsStart >= aStart && tsEnd <= aEnd;
     }
 
-    private bool AppointmentFallsInTimeslot(TimeSlot timeSlot, TAppointment appointment)
+    private bool AppointmentFallsInTimeslot(TimeSlot timeSlot, TAppointment appointment, TimeSpan duration)
     {
       var tsStart = timeSlot.Start;
-      var tsEnd = timeSlot.End;
+      var tsEnd = timeSlot.Start.Add(duration);
       var aStart = appointment.StartTime;
       var aEnd = appointment.StartTime + appointment.Duration;
 
@@ -160,7 +163,7 @@ namespace Bookings.Engine
 
     private static IEnumerable<TimeSlot> AvailableTimes(IEnumerable<TimeSlot> unfilteredSlots, IEnumerable<IAvailabilityItem> availability)
     {
-      return unfilteredSlots.Where(x=> TimeIsAvailable(x, availability)).ToList();
+      return unfilteredSlots.Where(x => TimeIsAvailable(x, availability)).ToList();
     }
 
     private static IEnumerable<TimeSlot> UsableSlots(IEnumerable<TimeSlot> unfilteredSlots, IEnumerable<IAvailabilityItem> availability, TimeSpan duration)
@@ -177,10 +180,10 @@ namespace Bookings.Engine
     {
       var items = availabilityItems.ToList();
       var day = date.DayOfWeek;
-      
+
       var startTime = items.Where(i => i.AvailableDays.Contains(day)).Min(x => x.StartTime);
       var endTime = items.Where(i => i.AvailableDays.Contains(day)).Max(x => x.EndTime);
-      
+
       return (startTime, endTime);
     }
 
@@ -215,7 +218,7 @@ namespace Bookings.Engine
     public List<DateTime> GetAvailableDates(DateTime startDate, DateTime endDate, string identity, TimeSpan duration)
     {
       var dates = new List<DateTime>();
-      
+
       while (startDate <= endDate)
       {
         var slots = GetTimeSlots(startDate, identity, duration);
@@ -232,11 +235,11 @@ namespace Bookings.Engine
     public TAppointment SaveAppointment(TAppointment appointment)
     {
       TAppointment savedAppointment = null;
-      
+
       var timeSlots = GetTimeSlots(appointment.StartTime, appointment.AppointmentType.Identity, appointment.Duration);
 
       if (timeSlots.Any(x => x.Start == appointment.StartTime && x.End == appointment.StartTime + appointment.Duration)) savedAppointment = repo.SaveAppointment(appointment);
-      
+
       return savedAppointment;
     }
   }

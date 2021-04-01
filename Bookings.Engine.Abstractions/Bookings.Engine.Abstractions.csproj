@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9</LangVersion>
-    <PackageVersion>0.0.4</PackageVersion>    
+    <PackageVersion>0.0.5</PackageVersion>    
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Title>JohnnyDevCraft Bookings Abstractions</Title>
     <Authors>JohnnyDevCraft LLC</Authors>
